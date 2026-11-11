@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Woodhead MRT Social Monitor</title>
+<meta name="description" content="Live social media monitoring for Woodhead Mountain Rescue Team and its area.">
+<meta name="robots" content="noindex">
+<style>
+:root{
+  --bg:#f6f7f5;--panel:#ffffff;--ink:#17201b;--muted:#5d6a62;--line:#dfe4e0;
+  --accent:#c8102e;--accent-ink:#fff;--ok:#1f7a4a;--warn:#b26a00;--bad:#b3261e;
+  --chip:#eef1ee;--brand:#fdecef;--alert:#fff4e0;--pos:#e5f4ea;--neg:#fbe9e7;
+  --shadow:0 1px 2px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1412;--panel:#171e1b;--ink:#e6ece8;--muted:#9aa8a0;--line:#2a3430;
+  --accent:#ff5068;--accent-ink:#1a0006;--ok:#5fd394;--warn:#f0b04a;--bad:#ff8a80;
+  --chip:#202925;--brand:#3a1d24;--alert:#3a2c12;--pos:#163323;--neg:#3a1d1a;--shadow:none;}}
+:root[data-theme="dark"]{
+  --bg:#0f1412;--panel:#171e1b;--ink:#e6ece8;--muted:#9aa8a0;--line:#2a3430;
+  --accent:#ff5068;--accent-ink:#1a0006;--ok:#5fd394;--warn:#f0b04a;--bad:#ff8a80;
+  --chip:#202925;--brand:#3a1d24;--alert:#3a2c12;--pos:#163323;--neg:#3a1d1a;--shadow:none;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:inherit}
+header{background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.top{display:flex;align-items:center;gap:12px;padding:12px 0;flex-wrap:wrap}
+.logo{width:38px;height:38px;border-radius:8px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:800;font-size:10px;letter-spacing:-.02em;flex:none}
+h1{font-size:17px;margin:0;line-height:1.2}
+.sub{color:var(--muted);font-size:12.5px}
+.spacer{flex:1}
+button,select,input,textarea{font:inherit;color:inherit}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:6px;vertical-align:1px}
+.status-dot.busy{background:var(--warn);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+main{padding:16px 0 48px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+.tile .n{font-size:26px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile .l{font-size:12.5px;color:var(--muted)}
+.tile.alert .n{color:var(--warn)}
+.tile.brand .n{color:var(--accent)}
+.bar{display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--chip);margin-top:8px}
+.bar i{display:block}
+.layout{display:grid;grid-template-columns:1fr 300px;gap:14px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0;padding:12px 14px;border-bottom:1px solid var(--line)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line);align-items:center}
+.filters select,.filters input[type=search]{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 8px;max-width:100%}
+.filters input[type=search]{flex:1;min-width:140px}
+.filters label{font-size:13px;display:flex;gap:5px;align-items:center;white-space:nowrap}
+.feed{list-style:none;margin:0;padding:0}
+.item{padding:12px 14px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:30px 1fr;gap:10px}
+.item:last-child{border-bottom:0}
+.item.new{box-shadow:inset 3px 0 0 var(--accent)}
+.src{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff}
+.src.bluesky{background:#1185fe}.src.reddit{background:#ff4500}.src.mastodon{background:#6364ff}.src.lemmy{background:#00bc8c}
+.meta{font-size:12.5px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.meta b{color:var(--ink);font-weight:600}
+.title{font-weight:600;margin:2px 0}
+.text{margin:2px 0 6px;overflow-wrap:anywhere;white-space:pre-line}
+.text.clamp{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+mark{background:#ffe58a;color:#111;border-radius:3px;padding:0 2px}
+.tags{display:flex;gap:5px;flex-wrap:wrap}
+.tag{font-size:11.5px;padding:1px 8px;border-radius:99px;background:var(--chip);white-space:nowrap}
+.tag.brand{background:var(--brand)}.tag.alert{background:var(--alert);font-weight:600}
+.tag.pos{background:var(--pos)}.tag.neg{background:var(--neg)}
+.tag.newtag{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.empty{padding:28px 14px;text-align:center;color:var(--muted)}
+.side{display:grid;gap:14px}
+.srclist{list-style:none;margin:0;padding:6px 14px 12px}
+.srclist li{display:flex;justify-content:space-between;gap:8px;padding:5px 0;font-size:13.5px;border-bottom:1px dashed var(--line)}
+.srclist li:last-child{border-bottom:0}
+.ok{color:var(--ok)}.err{color:var(--bad)}.muted{color:var(--muted)}
+.kwbars{padding:8px 14px 12px}
+.kwrow{display:grid;grid-template-columns:1fr 36px;gap:8px;font-size:13px;align-items:center;margin:4px 0}
+.kwrow .b{height:6px;background:var(--chip);border-radius:3px;overflow:hidden;grid-column:1/3}
+.kwrow .b i{display:block;height:100%;background:var(--accent)}
+.manual{padding:10px 14px 14px;display:grid;gap:8px}
+.manual select{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 8px;width:100%}
+.linkgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.linkgrid a{text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px;text-align:center}
+.linkgrid a:hover{border-color:var(--accent)}
+.note{font-size:12px;color:var(--muted);margin:0}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);max-width:640px;width:calc(100% - 32px);padding:0}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg{padding:16px;display:grid;gap:12px}
+.dlg h3{margin:0}
+.dlg label{display:grid;gap:4px;font-size:13px;font-weight:600}
+.dlg textarea,.dlg input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px;font-weight:400}
+.dlg textarea{min-height:64px;resize:vertical}
+.dlg .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.hint{font-weight:400;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap top">
+    <div class="logo" aria-hidden="true">WMRT</div>
+    <div>
+      <h1>Woodhead Mountain Rescue: Social Monitor</h1>
+      <div class="sub"><span id="dot" class="status-dot"></span><span id="statusText">Starting…</span></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" id="btnTheme" title="Toggle light/dark">◐</button>
+    <button class="btn" id="btnSettings">Keywords</button>
+    <button class="btn" id="btnExport">Export CSV</button>
+    <button class="btn primary" id="btnRefresh">Refresh now</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="tiles" aria-label="Summary">
+    <div class="tile"><div class="n" id="tTotal">0</div><div class="l">Mentions found</div></div>
+    <div class="tile brand"><div class="n" id="tBrand">0</div><div class="l">Brand mentions</div></div>
+    <div class="tile alert"><div class="n" id="tAlert">0</div><div class="l">Possible incident posts</div></div>
+    <div class="tile"><div class="n" id="t24">0</div><div class="l">In the last 24 hours</div></div>
+    <div class="tile"><div class="n" id="tSent">–</div><div class="l">Sentiment (positive / neutral / negative)</div>
+      <div class="bar" id="sentBar"></div></div>
+  </section>
+
+  <div class="layout">
+    <section class="panel" aria-label="Mentions feed">
+      <div class="filters">
+        <input type="search" id="fText" placeholder="Search within results…">
+        <select id="fSource"><option value="">All sources</option></select>
+        <select id="fKeyword"><option value="">All keywords</option></select>
+        <select id="fSent"><option value="">Any sentiment</option><option value="pos">Positive</option><option value="neu">Neutral</option><option value="neg">Negative</option></select>
+        <select id="fAge"><option value="0">Any time</option><option value="1">Last 24h</option><option value="7" selected>Last 7 days</option><option value="30">Last 30 days</option></select>
+        <label><input type="checkbox" id="fAlert"> Incidents only</label>
+        <label><input type="checkbox" id="fBrand"> Brand only</label>
+      </div>
+      <ul class="feed" id="feed"><li class="empty">Fetching the latest posts…</li></ul>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <h2>Live sources</h2>
+        <ul class="srclist" id="srcList"></ul>
+        <p class="note" style="padding:0 14px 12px">Auto-refreshes every <span id="intervalLbl">5</span> minutes while this page is open.</p>
+      </section>
+      <section class="panel">
+        <h2>Mentions by keyword</h2>
+        <div class="kwbars" id="kwBars"></div>
+      </section>
+      <section class="panel">
+        <h2>Check other platforms</h2>
+        <div class="manual">
+          <p class="note">X, Facebook, Instagram, TikTok, YouTube, Threads and LinkedIn don't allow free automatic searching. These links open each platform's own search, sorted by newest where it supports that.</p>
+          <select id="manualKw" aria-label="Keyword for manual search"></select>
+          <div class="linkgrid" id="manualLinks"></div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <form method="dialog" class="dlg" id="dlgForm">
+    <h3>Keywords</h3>
+    <label>Brand names <span class="hint">One per line. Always tracked; highlighted as brand mentions.</span>
+      <textarea id="kBrand"></textarea></label>
+    <label>Places <span class="hint">One per line. Tracked everywhere.</span>
+      <textarea id="kPlace"></textarea></label>
+    <label>Topics <span class="hint">One per line. These words are common worldwide, so a post only counts if it also mentions a place or local area below.</span>
+      <textarea id="kTopic"></textarea></label>
+    <label>Local area words <span class="hint">One per line. Used to keep topic matches local.</span>
+      <textarea id="kArea"></textarea></label>
+    <label>Incident words <span class="hint">One per line. Posts containing these are flagged as possible incidents.</span>
+      <textarea id="kAlert"></textarea></label>
+    <div class="row">
+      <button class="btn" value="reset" id="btnReset">Reset to defaults</button>
+      <button class="btn" value="cancel">Cancel</button>
+      <button class="btn primary" value="save">Save &amp; refresh</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(() => {
+"use strict";
+
+/* ---------- configuration ---------- */
+const DEFAULTS = {
+  brand: ["Woodhead Mountain Rescue", "Woodhead MRT", "WMRT"],
+  place: ["Woodhead", "Langsett", "Middle Black Clough", "Greno Woods", "Wharncliffe Crags"],
+  topic: ["hiking", "walking", "moors", "navigation"],
+  area:  ["Peak District", "Dark Peak", "Sheffield", "Barnsley", "Stocksbridge", "Holmfirth", "Bleaklow", "Longdendale", "Penistone"],
+  alert: ["missing", "injured", "injury", "lost", "rescue", "rescued", "callout", "call out", "helicopter", "stranded", "hypothermia", "casualty", "ambulance", "accident", "emergency", "fallen", "search party"]
+};
+const REFRESH_MIN = 5;
+const LS_KW = "wmrt.keywords.v1", LS_SEEN = "wmrt.seen.v1", LS_THEME = "wmrt.theme";
+
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+let KW = Object.assign({}, DEFAULTS, store.get(LS_KW, {}));
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const wordRe = t => new RegExp("(^|[^\\p{L}\\p{N}])" + reEsc(t).replace(/\s+/g, "[\\s-]+") + "(?=$|[^\\p{L}\\p{N}])", "iu");
+const stripHtml = h => { const d = document.createElement("div"); d.innerHTML = String(h || "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n"); return (d.textContent || "").trim(); };
+const tagify = t => t.toLowerCase().replace(/[^a-z0-9]/g, "");
+const quote = t => /\s/.test(t) ? `"${t}"` : t;
+function ago(ts){
+  const s = (Date.now() - ts) / 1000;
+  if (s < 60) return "just now";
+  if (s < 3600) return Math.floor(s/60) + "m ago";
+  if (s < 86400) return Math.floor(s/3600) + "h ago";
+  if (s < 86400*30) return Math.floor(s/86400) + "d ago";
+  return new Date(ts).toLocaleDateString("en-GB", {day:"numeric", month:"short", year:"numeric"});
+}
+async function getJSON(url, timeoutMs = 15000){
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), timeoutMs);
+  try {
+    const r = await fetch(url, { signal: ctl.signal, headers: { "Accept": "application/json" } });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return await r.json();
+  } catch (e) {
+    throw new Error(e.name === "AbortError" ? "timed out" : (e.message || "failed"));
+  } finally { clearTimeout(t); }
+}
+
+/* ---------- sentiment (small lexicon, tuned for outdoor / rescue talk) ---------- */
+const POS = "thank thanks thankyou grateful amazing brilliant great fantastic wonderful heroes hero superb lovely beautiful stunning love loved awesome incredible excellent support donate donated donation proud kind safe safely rescued well done best happy enjoyed glorious gorgeous".split(" ");
+const NEG = "terrible awful bad worst dangerous danger scary scared angry disgrace disgusting litter fly-tipping vandal vandalism fire wildfire injured injury died death dead tragic tragedy lost missing stuck stranded crash accident poor horrible nightmare sad shocking closed hate".split(" ");
+function sentiment(text){
+  const words = text.toLowerCase().match(/[a-z'-]+/g) || [];
+  let s = 0; for (const w of words){ if (POS.includes(w)) s++; else if (NEG.includes(w)) s--; }
+  return s > 0 ? "pos" : s < 0 ? "neg" : "neu";
+}
+
+/* ---------- matching ---------- */
+function analyse(item){
+  const hay = (item.title ? item.title + "\n" : "") + item.text;
+  const hit = list => list.filter(k => wordRe(k).test(hay));
+  const brand = hit(KW.brand), place = hit(KW.place), topic = hit(KW.topic), area = hit(KW.area), alert = hit(KW.alert);
+  const local = brand.length || place.length || area.length;
+  const keywords = [...brand, ...place, ...(local ? topic : [])];
+  if (!keywords.length) return null;               // not relevant enough
+  return Object.assign(item, {
+    keywords, isBrand: brand.length > 0, alerts: alert, isAlert: alert.length > 0 && (brand.length || place.length || area.length) > 0,
+    sent: sentiment(hay)
+  });
+}
+
+/* ---------- sources ---------- */
+// Each source returns normalised items: {id, source, url, author, title, text, ts, where, engagement}
+const SOURCES = [
+  {
+    key: "bluesky", label: "Bluesky", short: "BS",
+    async fetch(){
+      const terms = [...KW.brand, ...KW.place].map(quote);
+      const topicQs = KW.topic.map(t => `"Peak District" ${quote(t)}`);
+      const qs = [...terms, ...topicQs];
+      const out = [];
+      const results = await Promise.allSettled(qs.map(q =>
+        getJSON("https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?sort=latest&limit=25&q=" + encodeURIComponent(q))));
+      let ok = 0, lastErr;
+      for (const r of results){
+        if (r.status !== "fulfilled"){ lastErr = r.reason; continue; }
+        ok++;
+        for (const p of (r.value.posts || [])){
+          const rkey = (p.uri || "").split("/").pop();
+          out.push({
+            id: "bsky:" + p.uri, source: "bluesky",
+            url: `https://bsky.app/profile/${p.author?.handle}/post/${rkey}`,
+            author: p.author?.displayName || p.author?.handle, handle: "@" + (p.author?.handle || ""),
+            text: p.record?.text || "", ts: Date.parse(p.record?.createdAt || p.indexedAt) || Date.now(),
+            where: "", engagement: (p.likeCount||0) + (p.repostCount||0) + (p.replyCount||0)
+          });
+        }
+      }
+      if (!ok) throw lastErr || new Error("failed");
+      return out;
+    }
+  },
+  {
+    key: "reddit", label: "Reddit", short: "R",
+    async fetch(){
+      const q1 = [...KW.brand, ...KW.place].map(quote).join(" OR ");
+      const q2 = `(${KW.topic.map(quote).join(" OR ")}) AND (${KW.area.slice(0,4).map(quote).join(" OR ")})`;
+      const out = []; let ok = 0, lastErr;
+      for (const q of [q1, q2]){
+        try {
+          const j = await getJSON("https://www.reddit.com/search.json?sort=new&t=month&limit=50&raw_json=1&q=" + encodeURIComponent(q));
+          ok++;
+          for (const c of (j.data?.children || [])){
+            const d = c.data;
+            out.push({
+              id: "reddit:" + d.name, source: "reddit", url: "https://www.reddit.com" + d.permalink,
+              author: "u/" + d.author, title: d.title, text: d.selftext || "",
+              ts: (d.created_utc || 0) * 1000, where: "r/" + d.subreddit, engagement: (d.score||0) + (d.num_comments||0)
+            });
+          }
+        } catch (e){ lastErr = e; }
+      }
+      if (!ok) throw lastErr || new Error("failed");
+      return out;
+    }
+  },
+  {
+    key: "mastodon", label: "Mastodon", short: "M",
+    async fetch(){
+      // Mastodon only allows anonymous hashtag timelines, so search by hashtag.
+      const tags = [...new Set([...KW.brand, ...KW.place, ...KW.topic, "PeakDistrict", "MountainRescue"].map(tagify).filter(Boolean))];
+      const results = await Promise.allSettled(tags.map(t =>
+        getJSON(`https://mastodon.social/api/v1/timelines/tag/${encodeURIComponent(t)}?limit=40`)));
+      const out = []; let ok = 0, lastErr;
+      for (const r of results){
+        if (r.status !== "fulfilled"){ lastErr = r.reason; continue; }
+        ok++;
+        for (const s of r.value || []){
+          const st = s.reblog || s;
+          out.push({
+            id: "masto:" + (st.uri || st.url), source: "mastodon", url: st.url || st.uri,
+            author: st.account?.display_name || st.account?.acct, handle: "@" + (st.account?.acct || ""),
+            text: stripHtml(st.content), ts: Date.parse(st.created_at) || Date.now(), where: "",
+            engagement: (st.favourites_count||0) + (st.reblogs_count||0) + (st.replies_count||0)
+          });
+        }
+      }
+      if (!ok) throw lastErr || new Error("failed");
+      return out;
+    }
+  },
+  {
+    key: "lemmy", label: "Lemmy", short: "L",
+    async fetch(){
+      const qs = [...KW.brand, ...KW.place];
+      const results = await Promise.allSettled(qs.map(q =>
+        getJSON("https://lemmy.world/api/v3/search?type_=Posts&sort=New&limit=20&q=" + encodeURIComponent(q))));
+      const out = []; let ok = 0, lastErr;
+      for (const r of results){
+        if (r.status !== "fulfilled"){ lastErr = r.reason; continue; }
+        ok++;
+        for (const p of (r.value.posts || [])){
+          out.push({
+            id: "lemmy:" + p.post?.ap_id, source: "lemmy", url: p.post?.ap_id,
+            author: p.creator?.name, title: p.post?.name, text: p.post?.body || "",
+            ts: Date.parse(p.post?.published) || Date.now(), where: "!" + (p.community?.name || ""),
+            engagement: (p.counts?.score||0) + (p.counts?.comments||0)
+          });
+        }
+      }
+      if (!ok) throw lastErr || new Error("failed");
+      return out;
+    }
+  }
+];
+
+/* ---------- state ---------- */
+let items = new Map();                                        // id -> item
+const srcState = Object.fromEntries(SOURCES.map(s => [s.key, {status: "waiting", count: 0, at: null, err: ""}]));
+const seen = new Set(store.get(LS_SEEN, []));
+const firstVisit = seen.size === 0;
+let busy = false;
+
+async function refresh(){
+  if (busy) return; busy = true;
+  $("#dot").classList.add("busy"); $("#statusText").textContent = "Checking sources…";
+  await Promise.all(SOURCES.map(async s => {
+    srcState[s.key].status = "loading"; renderSources();
+    try {
+      const raw = await s.fetch();
+      let n = 0;
+      for (const it of raw){
+        if (!it.id || !it.url) continue;
+        const a = analyse(it);
+        if (!a) continue;
+        if (!items.has(a.id)){ a.isNew = !firstVisit && !seen.has(a.id); items.set(a.id, a); }
+        n++;
+      }
+      Object.assign(srcState[s.key], {status: "ok", count: n, at: Date.now(), err: ""});
+    } catch (e){
+      Object.assign(srcState[s.key], {status: "error", at: Date.now(), err: e.message || "failed"});
+    }
+    renderSources(); render();
+  }));
+  // remember everything we've shown so "new" means new since the last check
+  const ids = [...items.keys()];
+  ids.forEach(id => seen.add(id));
+  store.set(LS_SEEN, [...seen].slice(-3000));
+  busy = false;
+  $("#dot").classList.remove("busy");
+  const okCount = Object.values(srcState).filter(s => s.status === "ok").length;
+  $("#statusText").textContent = `Updated ${new Date().toLocaleTimeString("en-GB", {hour:"2-digit", minute:"2-digit"})} · ${okCount}/${SOURCES.length} sources live`;
+}
+
+/* ---------- rendering ---------- */
+function highlight(text, words){
+  let html = esc(text);
+  const sorted = [...new Set(words)].sort((a, b) => b.length - a.length);
+  for (const w of sorted){
+    const re = new RegExp("(^|[^\\p{L}\\p{N}])(" + reEsc(esc(w)).replace(/\s+/g, "[\\s-]+") + ")(?=$|[^\\p{L}\\p{N}])", "giu");
+    html = html.replace(re, "$1<mark>$2</mark>");
+  }
+  return html;
+}
+
+function filtered(){
+  const q = $("#fText").value.trim().toLowerCase(), src = $("#fSource").value, kw = $("#fKeyword").value,
+        sent = $("#fSent").value, age = +$("#fAge").value, onlyAlert = $("#fAlert").checked, onlyBrand = $("#fBrand").checked;
+  const cutoff = age ? Date.now() - age * 86400000 : 0;
+  return [...items.values()].filter(i =>
+    (!src || i.source === src) && (!kw || i.keywords.includes(kw)) && (!sent || i.sent === sent) &&
+    i.ts >= cutoff && (!onlyAlert || i.isAlert) && (!onlyBrand || i.isBrand) &&
+    (!q || ((i.title || "") + " " + i.text + " " + (i.author || "")).toLowerCase().includes(q))
+  ).sort((a, b) => b.ts - a.ts);
+}
+
+function render(){
+  const list = filtered();
+  const feed = $("#feed");
+  if (!list.length){
+    feed.innerHTML = `<li class="empty">${busy ? "Fetching the latest posts…" : "No matching posts. Try widening the time range or clearing filters."}</li>`;
+  } else {
+    feed.innerHTML = list.slice(0, 300).map(i => {
+      const S = SOURCES.find(s => s.key === i.source);
+      const words = [...i.keywords, ...i.alerts];
+      const tags = [
+        i.isNew ? `<span class="tag newtag">NEW</span>` : "",
+        i.isBrand ? `<span class="tag brand">Brand</span>` : "",
+        i.isAlert ? `<span class="tag alert">⚠ Possible incident: ${esc(i.alerts.slice(0,3).join(", "))}</span>` : "",
+        i.sent !== "neu" ? `<span class="tag ${i.sent}">${i.sent === "pos" ? "Positive" : "Negative"}</span>` : "",
+        ...i.keywords.filter(k => !KW.brand.includes(k)).map(k => `<span class="tag">${esc(k)}</span>`)
+      ].join("");
+      return `<li class="item${i.isNew ? " new" : ""}">
+        <div class="src ${i.source}" title="${esc(S.label)}">${S.short}</div>
+        <div>
+          <div class="meta"><b>${esc(i.author || "unknown")}</b>${i.handle ? `<span>${esc(i.handle)}</span>` : ""}${i.where ? `<span>in ${esc(i.where)}</span>` : ""}<span>· ${S.label}</span><span>· <time datetime="${new Date(i.ts).toISOString()}" title="${new Date(i.ts).toLocaleString("en-GB")}">${ago(i.ts)}</time></span>${i.engagement ? `<span>· ${i.engagement} interactions</span>` : ""}</div>
+          ${i.title ? `<div class="title">${highlight(i.title, words)}</div>` : ""}
+          ${i.text ? `<div class="text clamp">${highlight(i.text, words)}</div>` : ""}
+          <div class="tags">${tags}<a class="tag" href="${esc(i.url)}" target="_blank" rel="noopener noreferrer">Open post ↗</a></div>
+        </div></li>`;
+    }).join("");
+  }
+  renderStats();
+}
+
+function renderStats(){
+  const all = [...items.values()];
+  const day = Date.now() - 86400000;
+  $("#tTotal").textContent = all.length;
+  $("#tBrand").textContent = all.filter(i => i.isBrand).length;
+  $("#tAlert").textContent = all.filter(i => i.isAlert && i.ts > Date.now() - 7*86400000).length;
+  $("#t24").textContent = all.filter(i => i.ts > day).length;
+  const c = {pos:0, neu:0, neg:0}; all.forEach(i => c[i.sent]++);
+  const tot = all.length || 1;
+  $("#tSent").textContent = all.length ? `${c.pos} / ${c.neu} / ${c.neg}` : "–";
+  $("#sentBar").innerHTML = all.length ? `<i style="width:${c.pos/tot*100}%;background:var(--ok)"></i><i style="width:${c.neu/tot*100}%;background:var(--muted);opacity:.4"></i><i style="width:${c.neg/tot*100}%;background:var(--bad)"></i>` : "";
+  // keyword breakdown
+  const counts = {}; [...KW.brand, ...KW.place, ...KW.topic].forEach(k => counts[k] = 0);
+  all.forEach(i => i.keywords.forEach(k => counts[k] = (counts[k] || 0) + 1));
+  const max = Math.max(1, ...Object.values(counts));
+  $("#kwBars").innerHTML = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([k, n]) =>
+    `<div class="kwrow"><span>${esc(k)}</span><span class="muted" style="text-align:right">${n}</span><div class="b"><i style="width:${n/max*100}%"></i></div></div>`).join("");
+}
+
+function renderSources(){
+  $("#srcList").innerHTML = SOURCES.map(s => {
+    const st = srcState[s.key];
+    const right = st.status === "ok" ? `<span class="ok">● ${st.count} matches</span>`
+      : st.status === "error" ? `<span class="err" title="${esc(st.err)}">● unavailable (${esc(st.err)})</span>`
+      : st.status === "loading" ? `<span class="muted">checking…</span>` : `<span class="muted">waiting</span>`;
+    return `<li><span>${s.label}</span>${right}</li>`;
+  }).join("");
+}
+
+function populateFilters(){
+  $("#fSource").innerHTML = `<option value="">All sources</option>` + SOURCES.map(s => `<option value="${s.key}">${s.label}</option>`).join("");
+  const kws = [...KW.brand, ...KW.place, ...KW.topic];
+  $("#fKeyword").innerHTML = `<option value="">All keywords</option>` + kws.map(k => `<option>${esc(k)}</option>`).join("");
+  $("#manualKw").innerHTML = kws.map(k => `<option>${esc(k)}</option>`).join("");
+  renderManual();
+}
+
+function renderManual(){
+  const kw = $("#manualKw").value || KW.brand[0];
+  const isTopic = KW.topic.includes(kw);
+  const q = isTopic ? `${kw} "Peak District"` : quote(kw);
+  const e = encodeURIComponent(q), tag = tagify(isTopic ? "peakdistrict" + kw : kw);
+  const links = [
+    ["X (Twitter)", `https://x.com/search?q=${e}&f=live`],
+    ["Facebook", `https://www.facebook.com/search/posts?q=${e}`],
+    ["Instagram #", `https://www.instagram.com/explore/tags/${tag}/`],
+    ["TikTok", `https://www.tiktok.com/search?q=${e}`],
+    ["YouTube", `https://www.youtube.com/results?search_query=${e}&sp=CAI%253D`],
+    ["Threads", `https://www.threads.net/search?q=${e}`],
+    ["LinkedIn", `https://www.linkedin.com/search/results/content/?keywords=${e}&sortBy=%22date_posted%22`],
+    ["Google News", `https://news.google.com/search?q=${e}&hl=en-GB&gl=GB&ceid=GB:en`],
+    ["Google (past week)", `https://www.google.com/search?q=${e}&tbs=qdr:w`],
+    ["Strava / blogs", `https://www.google.com/search?q=${e}+site%3Astrava.com+OR+site%3Awordpress.com+OR+site%3Ablogspot.com&tbs=qdr:m`]
+  ];
+  $("#manualLinks").innerHTML = links.map(([l, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${l}</a>`).join("");
+}
+
+/* ---------- export ---------- */
+function exportCSV(){
+  const rows = [["date","source","author","where","keywords","brand","possible_incident","sentiment","title","text","url"]];
+  filtered().forEach(i => rows.push([new Date(i.ts).toISOString(), i.source, i.author || "", i.where || "", i.keywords.join("; "),
+    i.isBrand ? "yes" : "", i.isAlert ? i.alerts.join("; ") : "", i.sent, i.title || "", i.text, i.url]));
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + csv], {type: "text/csv"}));
+  a.download = `wmrt-mentions-${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ---------- settings ---------- */
+const fields = {brand: "#kBrand", place: "#kPlace", topic: "#kTopic", area: "#kArea", alert: "#kAlert"};
+function openSettings(){ for (const [k, sel] of Object.entries(fields)) $(sel).value = KW[k].join("\n"); $("#dlg").showModal(); }
+$("#dlg").addEventListener("close", () => {
+  const v = $("#dlg").returnValue;
+  if (v === "save" || v === "reset"){
+    if (v === "reset"){ KW = Object.assign({}, DEFAULTS); store.set(LS_KW, {}); }
+    else {
+      for (const [k, sel] of Object.entries(fields)) KW[k] = $(sel).value.split("\n").map(s => s.trim()).filter(Boolean);
+      store.set(LS_KW, KW);
+    }
+    items = new Map(); populateFilters(); render(); refresh();
+  }
+});
+
+/* ---------- theme ---------- */
+function applyTheme(t){ if (t) document.documentElement.setAttribute("data-theme", t); else document.documentElement.removeAttribute("data-theme"); }
+applyTheme(store.get(LS_THEME, null));
+$("#btnTheme").onclick = () => {
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const cur = document.documentElement.getAttribute("data-theme") || (dark ? "dark" : "light");
+  const next = cur === "dark" ? "light" : "dark"; applyTheme(next); store.set(LS_THEME, next);
+};
+
+/* ---------- wire up ---------- */
+["#fText","#fSource","#fKeyword","#fSent","#fAge","#fAlert","#fBrand"].forEach(s => $(s).addEventListener("input", render));
+$("#manualKw").addEventListener("input", renderManual);
+$("#btnRefresh").onclick = refresh;
+$("#btnSettings").onclick = openSettings;
+$("#btnExport").onclick = exportCSV;
+$("#intervalLbl").textContent = REFRESH_MIN;
+setInterval(() => { if (!document.hidden) refresh(); }, REFRESH_MIN * 60000);
+setInterval(() => document.querySelectorAll("time").forEach(t => t.textContent = ago(Date.parse(t.getAttribute("datetime")))), 60000);
+document.addEventListener("visibilitychange", () => {
+  const last = Math.max(0, ...Object.values(srcState).map(s => s.at || 0));
+  if (!document.hidden && Date.now() - last > REFRESH_MIN * 60000) refresh();
+});
+
+populateFilters(); renderSources(); refresh();
+})();
+</script>
+</body>
+</html>
