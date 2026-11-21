@@ -1,8 +1,17 @@
 {
 	"name": "my-agent",
 	"main": "src/index.ts",
-	"compatibility_date": "2026-11-19",
-	"observability": {
-		"enabled": true,
+	"upload_source_maps": true,
+	// Set this to today's date
+	"compatibility_date": "2026-11-21",
+	"compatibility_flags": ["nodejs_compat"],
+	"ai": {
+		"binding": "AI",
+	},
+	"durable_objects": {
+		"bindings": [{ "name": "Assistant", "class_name": "Assistant" }],
+	},
+	"exports": {
+		"Assistant": { "type": "durable-object", "storage": "sqlite" },
 	},
 }
