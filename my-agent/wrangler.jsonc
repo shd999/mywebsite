@@ -1,5 +1,6 @@
 {
 	"name": "my-agent",
+	"account_id": "4ba7762f68c6b2c52724551d75788168",
 	"main": "src/index.ts",
 	"upload_source_maps": true,
 	// Set this to today's date
