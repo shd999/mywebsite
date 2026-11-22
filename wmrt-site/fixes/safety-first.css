@@ -1,0 +1,56 @@
+/* Woodhead MRT: safety first on phones (step 1 of the critique fixes)
+   Paste into Appearance > Customise > Additional CSS. */
+
+/* 1. On the homepage and every Safety page, phones get no Subscribe float
+      and no consent banner: nothing covers the 999 message or the finder. */
+@media (max-width: 781px) {
+  body.home .jetpack-subscribe-floating-button,
+  body.page-id-399 .jetpack-subscribe-floating-button,
+  body.parent-pageid-399 .jetpack-subscribe-floating-button,
+  body.home #wmrt-ck,
+  body.page-id-399 #wmrt-ck,
+  body.parent-pageid-399 #wmrt-ck { display: none !important; }
+
+  /* The homepage Donate bar waits until the visitor is past the finder. */
+  body.home .grf-sticky { transform: translateY(110%); transition: transform .25s cubic-bezier(.2,.8,.2,1); }
+  body.home.wmrt-past-finder .grf-sticky { transform: none; }
+  body.home.wmrt-finder-open .grf-sticky { transform: translateY(110%); }
+}
+
+/* 2. The safety bar: Call 999 and Find my grid reference, fixed at the
+      bottom of the screen on the homepage and Safety pages. */
+.wmrt-safebar { display: none; }
+@media (max-width: 781px) {
+  .wmrt-safebar {
+    display: grid; grid-template-columns: 1fr 1.45fr; gap: 8px;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 96;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    background: var(--colour-primary-deep, #142C66);
+    box-shadow: 0 -6px 18px rgba(15, 27, 45, .28);
+    transition: transform .25s cubic-bezier(.2,.8,.2,1);
+  }
+  .wmrt-safebar a, .wmrt-safebar button {
+    margin: 0; border: 0; cursor: pointer; letter-spacing: normal; text-transform: none;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 48px; padding: 0 12px; border-radius: var(--radius, 4px);
+    font-family: var(--font-body); font-size: 17px; font-weight: 800; line-height: 1.1;
+    text-align: center; text-decoration: none; white-space: nowrap;
+  }
+  .wmrt-safebar .sb-999 { background: var(--colour-alert, #C42B21); color: #fff; }
+  .wmrt-safebar .sb-grid { background: var(--colour-accent, #E8641B); color: var(--colour-ink, #0F1B2D); }
+  .wmrt-safebar svg { width: 18px; height: 18px; fill: currentColor; flex: none; }
+  .wmrt-safebar a:focus-visible, .wmrt-safebar button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+  body.wmrt-past-finder .wmrt-safebar,
+  body.wmrt-finder-open .wmrt-safebar { transform: translateY(110%); }
+  /* Lift the site's Top button above the bar. */
+  body.has-safebar .wmrt-top { bottom: calc(76px + env(safe-area-inset-bottom)); }
+  /* Leave room so the bar never covers the end of the page. */
+  body.has-safebar { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 359px) {
+  .wmrt-safebar { grid-template-columns: 1fr 1.6fr; }
+  .wmrt-safebar a, .wmrt-safebar button { font-size: 15px; padding: 0 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wmrt-safebar, body.home .grf-sticky { transition: none; }
+}
