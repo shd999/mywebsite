@@ -1,0 +1,110 @@
+<!-- Woodhead MRT: safety first on phones (step 1 of the critique fixes).
+     Add this whole block as one HTML snippet in the site footer, front end only.
+     The data-no-* attributes tell LiteSpeed to run it straight away rather than
+     waiting for the first tap. To undo, switch the snippet off. -->
+<script data-no-optimize="1" data-no-defer="1" data-no-minify="1">
+(function () {
+  // Styles travel with the script, so LiteSpeed's unused-CSS removal can't strip them.
+  var st = document.createElement('style');
+  st.id = 'wmrt-safebar-css';
+  st.textContent = [
+    "/* 1. On the homepage and every Safety page, phones get no Subscribe float",
+    "      and no consent banner: nothing covers the 999 message or the finder. */",
+    "@media (max-width: 781px) {",
+    "  body.home .jetpack-subscribe-floating-button,",
+    "  body.page-id-399 .jetpack-subscribe-floating-button,",
+    "  body.parent-pageid-399 .jetpack-subscribe-floating-button,",
+    "  body.home #wmrt-ck,",
+    "  body.page-id-399 #wmrt-ck,",
+    "  body.parent-pageid-399 #wmrt-ck { display: none !important; }",
+    "",
+    "  /* The homepage Donate bar waits until the visitor is past the finder. */",
+    "  body.home .grf-sticky { transform: translateY(110%); transition: transform .25s cubic-bezier(.2,.8,.2,1); }",
+    "  body.home.wmrt-past-finder .grf-sticky { transform: none; }",
+    "  body.home.wmrt-finder-open .grf-sticky { transform: translateY(110%); }",
+    "}",
+    "",
+    "/* 2. The safety bar: Call 999 and Find my grid reference, fixed at the",
+    "      bottom of the screen on the homepage and Safety pages. */",
+    ".wmrt-safebar { display: none; }",
+    "@media (max-width: 781px) {",
+    "  .wmrt-safebar {",
+    "    display: grid; grid-template-columns: 1fr 1.45fr; gap: 8px;",
+    "    position: fixed; left: 0; right: 0; bottom: 0; z-index: 96;",
+    "    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));",
+    "    background: var(--colour-primary-deep, #142C66);",
+    "    box-shadow: 0 -6px 18px rgba(15, 27, 45, .28);",
+    "    transition: transform .25s cubic-bezier(.2,.8,.2,1);",
+    "  }",
+    "  .wmrt-safebar a, .wmrt-safebar button {",
+    "    margin: 0; border: 0; cursor: pointer; letter-spacing: normal; text-transform: none;",
+    "    display: flex; align-items: center; justify-content: center; gap: 8px;",
+    "    min-height: 48px; padding: 0 12px; border-radius: var(--radius, 4px);",
+    "    font-family: var(--font-body); font-size: 17px; font-weight: 800; line-height: 1.1;",
+    "    text-align: center; text-decoration: none; white-space: nowrap;",
+    "  }",
+    "  .wmrt-safebar .sb-999 { background: var(--colour-alert, #C42B21); color: #fff; }",
+    "  .wmrt-safebar .sb-grid { background: var(--colour-accent, #E8641B); color: var(--colour-ink, #0F1B2D); }",
+    "  .wmrt-safebar svg { width: 18px; height: 18px; fill: currentColor; flex: none; }",
+    "  .wmrt-safebar a:focus-visible, .wmrt-safebar button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }",
+    "  body.wmrt-past-finder .wmrt-safebar,",
+    "  body.wmrt-finder-open .wmrt-safebar { transform: translateY(110%); }",
+    "  /* Lift the site's Top button above the bar. */",
+    "  body.has-safebar .wmrt-top { bottom: calc(76px + env(safe-area-inset-bottom)); }",
+    "  /* Leave room so the bar never covers the end of the page. */",
+    "  body.has-safebar { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }",
+    "}",
+    "@media (max-width: 359px) {",
+    "  .wmrt-safebar { grid-template-columns: 1fr 1.6fr; }",
+    "  .wmrt-safebar a, .wmrt-safebar button { font-size: 15px; padding: 0 8px; }",
+    "}",
+    "@media (prefers-reduced-motion: reduce) {",
+    "  .wmrt-safebar, body.home .grf-sticky { transition: none; }",
+    "}"
+  ].join('\n');
+  document.head.appendChild(st);
+
+  var b = document.body;
+  var isHome = b.classList.contains('home');
+  var isSafety = b.classList.contains('page-id-399') || b.classList.contains('parent-pageid-399');
+
+  // Keep "dial 999" together on narrow screens.
+  var s = document.querySelector('.wh-emergency strong');
+  if (s) s.innerHTML = s.innerHTML.replace('dial 999', 'dial 999');
+
+  if (!isHome && !isSafety) return;
+
+  // On the homepage and the emergency page the finder is on the page, so the
+  // bar's second button starts it there. Other Safety pages link to it.
+  var box = document.querySelector(isHome ? '#grf-locate' : '#find-my-grid-reference');
+  var phone = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>';
+  var grid = box
+    ? '<button type="button" class="sb-grid">Find my grid reference</button>'
+    : '<a class="sb-grid" href="/safety/in-an-emergency/#find-my-grid-reference">Find my grid reference</a>';
+
+  var bar = document.createElement('nav');
+  bar.className = 'wmrt-safebar';
+  bar.setAttribute('aria-label', 'Emergency');
+  bar.innerHTML = '<a class="sb-999" href="tel:999">' + phone + 'Call 999</a>' + grid;
+  b.appendChild(bar);
+  b.classList.add('has-safebar');
+
+  // A button, not a "#" link: the theme takes over in-page links for its own
+  // smooth scrolling, which would stop the finder from starting.
+  if (box) bar.querySelector('.sb-grid').addEventListener('click', function () {
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    var go = box.querySelector('.loc-btn');
+    if (go) go.click();
+  });
+
+  // Hide both bars while the finder is on screen, so nothing covers the result.
+  if (box && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function (en) {
+      var r = en[0];
+      b.classList.toggle('wmrt-finder-open', r.intersectionRatio > 0.5);
+      // Homepage only: once the visitor has scrolled past the finder, swap to Donate.
+      if (isHome) b.classList.toggle('wmrt-past-finder', !r.isIntersecting && r.boundingClientRect.bottom < 0);
+    }, { threshold: [0, 0.5, 1] }).observe(box);
+  }
+})();
+</script>
